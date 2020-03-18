@@ -88,13 +88,13 @@ let Storage =
     { accesskeyid: Text -- accesskeyid
     , accesskeysecret: Text -- accesskeysecret
     , region: Text -- OSS region name
-    , endpoint: Text -- optional endpoints
-    , internal: Text -- optional internal endpoint
+    , endpoint: Optional Text -- optional endpoints
+    , internal: Optional Text -- optional internal endpoint
     , bucket: Text -- OSS bucket
-    , encrypt: Text -- optional data encryption setting
-    , secure: Text -- optional ssl setting
-    , chunksize: Text -- optional size valye
-    , rootdirectory: Text -- optional root directory
+    , encrypt: Optional Text -- optional data encryption setting
+    , secure: Optional Text -- optional ssl setting
+    , chunksize: Optional Text -- optional size valye
+    , rootdirectory: Optional Text -- optional root directory
     }
   , inmemory:  {} --# This driver takes no parameters
   , delete:
