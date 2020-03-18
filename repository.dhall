@@ -3,10 +3,10 @@ let
     { accesslog:
         { disabled: Bool -- true
         }
-    , level: Text -- debug
-    , formatter: Text -- text
+    , level: Optional Text -- error, warn, info, and debug. The default is info.
+    , formatter: Optional Text -- text, json, and logstash
     , fields:
-        { service: Text -- registry
+        Optional { service: Text -- registry
         , environment: Text -- staging
         }
     , hooks:
@@ -27,6 +27,8 @@ let
         ]
     }
 
+-- The storage option is required and defines which storage backend is in use. You must configure exactly one backend.
+-- Note: age and interval are strings containing a number with optional fraction and a unit suffix. Some examples: 45m, 2h10m, 168h.
 let Storage =
   { filesystem:
       { rootdirectory: Text -- /var/lib/registry
@@ -104,7 +106,7 @@ let Storage =
     { disable: Bool -- false
     }
   , cache:
-    { blobdescriptor: Text -- redis
+    { blobdescriptor: Text -- redis or inmemory
     }
   , maintenance:
     { uploadpurging:
@@ -119,20 +121,21 @@ let Storage =
     }
   }
 
+-- You can configure only one authentication provider.
 let Auth : Type =
   { silly:
-    { realm: Text -- silly-realm
+    Optional { realm: Text -- silly-realm
     , service: Text -- silly-service
     }
   , token:
-    { autoredirect: Bool --  true
+    Optional { autoredirect: Bool --  true
     , realm: Text -- token-realm
     , service: Text -- token-service
     , issuer: Text -- registry-token-issuer
     , rootcertbundle: Text -- /root/certs/bundle
     }
   , htpasswd:
-    { realm: Text -- basic-realm
+    Optional { realm: Text -- basic-realm
     , path: Text -- /path/to/htpasswd
     }
   }
@@ -148,11 +151,11 @@ let MCloudfront : Type =
     { baseurl: Text -- https://my.cloudfronted.domain.com/
     , privatekey: Text -- /path/to/pem
     , keypairid: Text -- cloudfrontkeypairid
-    , duration: Text -- 3000s
-    , ipfilteredby: Text -- awsregion
-    , awsregion: Text -- us-east-1, use-east-2
-    , updatefrenquency: Text -- 12h
-    , iprangesurl: Text -- https://ip-ranges.amazonaws.com/ip-ranges.json
+    , duration: Optional Text -- 3000s -- An integer and unit for the duration of the Cloudfront session. Valid time units are ns, us (or µs), ms, s, m, or h.
+    , ipfilteredby: Optional Text -- none, aws or awsregion
+    , awsregion: Optional Text -- us-east-1, use-east-2
+    , updatefrenquency: Optional Text -- 12h
+    , iprangesurl: Optional Text -- https://ip-ranges.amazonaws.com/ip-ranges.json
     }
   }
 
@@ -173,69 +176,73 @@ let Middleware : Type =
 let Reporting : Type =
   { bugsnag:
     { apikey: Text  -- bugsnagapikey
-    , releasestage: Text  -- bugsnagreleasestage
-    , endpoint: Text  -- bugsnagendpoint
+    , releasestage: Optional Text  -- bugsnagreleasestage
+    , endpoint: Optional Text  -- bugsnagendpoint
     }
   , newrelic:
     { licensekey: Text -- newreliclicensekey
-    , name: Text -- newrelicname
-    , verbose: Bool -- true
+    , name: Optional Text -- newrelicname
+    , verbose: Optional Bool -- true
     }
   }
 
 let Http : Type =
   { addr: Text -- localhost:5000
-  , prefix: Text -- /my/nested/registry/
-  , host: Text -- https://myregistryaddress.org:5000
-  , secret: Text -- asecretforlocaldevelopment
+  , net: Text -- unix,  tcp
+  , prefix: Optional Text -- /my/nested/registry/
+  , host: Optional Text -- https://myregistryaddress.org:5000
+  , secret: Optional Text -- asecretforlocaldevelopment
   , relativeurls: Bool -- false
-  , draintimeout: Text -- 60s
+  , draintimeout: Optional Text -- 60s
   , tls:
+    Optional
     { certificate: Text -- /path/to/x509/public
     , key: Text -- /path/to/x509/private
-    , clientcas:
-        [ Text ] -- /path/to/ca.pem ,/path/to/another/ca.pem
+    , clientcas: Optional [ Text ] -- /path/to/ca.pem ,/path/to/another/ca.pem
     , letsencrypt:
+      Optional
       { cachefile: Text -- /path/to/cache-file
       , email: Text -- emailused@letsencrypt.com
-      , hosts: Text -- [myregistryaddress.org]
+      , hosts: Optional [Text] -- [myregistryaddress.org]
       }
     }
   , debug:
+    Optional
     { addr: Text -- localhost:5001
     , prometheus:
-      { enabled: Bool -- true
-      , path: Text -- /metrics
+      { enabled: Optional Bool -- true
+      , path: Optional Text -- /metrics
       }
     }
   , headers:
+    Optional
     { X-Content-Type-Options: Text -- [nosniff]
     }
   , http2:
+    Optional
     { disabled: Bool -- false
     }
   }
 
 let Notifications :  Type =
 { events:
+  Optional
   { includereferences: Bool -- true
   }
 , endpoints:
     [
       { name: Text -- alistener
-      , disabled: Bool -- false
+      , disabled: Optional Bool -- false
       , url: Text -- https://my.listener.com/event
       , headers: Text -- <http.Header>
-      , timeout: Text -- 1s
+      , timeout: Text -- 1s --  value for the HTTP timeout. A positive integer and an optional suffix indicating the unit of time, which may be ns, us, ms, s, m, or h
       , threshold: Natural -- 10
-      , backoff: Text -- 1s
-      , ignoredmediatypes:
-        [ Text ] -- [application/octet-stream ]
+      , backoff: Text -- 1s value for the HTTP timeout. A positive integer and an optional suffix indicating the unit of time, which may be ns, us, ms, s, m, or h
+      , ignoredmediatypes: Optional [ Text ] -- [application/octet-stream ]
       , ignore:
-        { mediatypes:
-        [ Text ] -- [application/octet-stream ]
-        , actions:
-          [ Text ] -- [ pull ]
+        Optional
+        { mediatypes: [ Text ] -- [application/octet-stream ]
+        , actions: [ Text ] -- [ pull ]
         }
       }
     ]
@@ -243,59 +250,60 @@ let Notifications :  Type =
 
 let Redis : Type  =
   { addr: Text -- localhost:6379
-  , password: Text -- asecret
-  , db: Natural -- 0
-  , dialtimeout: Text -- 10ms
-  , readtimeout: Text -- 10ms
-  , writetimeout: Text -- 10ms
+  , password: Optional Text -- asecret
+  , db: Optional Natural -- 0
+  , dialtimeout: Optional Text -- 10ms
+  , readtimeout: Optional Text -- 10ms
+  , writetimeout: Optional Text -- 10ms
   , pool:
-    { maxidle: Natural -- 16
-    , maxactive: Natural -- 64
-    , idletimeout: Text -- 300s
+    { maxidle: Optional Natural -- 16
+    , maxactive: Optional Natural -- 64
+    , idletimeout: Optional Text -- 300s
     }
   }
 
 let Health : Type =
   { storagedriver:
     { enabled: Bool -- true
-    , interval: Text -- 10s
-    , threshold: Natural -- 3
+    , interval: Optional Text -- 10s
+    , threshold: Optional Natural -- 3
     }
   , file:
     [ { file: Text -- /path/to/checked/file
-      , interval: Text -- 10s
+      , interval: Optional Text -- 10s
       }
     ]
   , http:
     [ { uri: Text -- http://server.to.check/must/return/200
       , headers:
+        Optional
         { Authorization: Text -- [Basic QWxhZGRpbjpvcGVuIHNlc2FtZQ==]
         }
-      , statuscode: Natural --  200
-      , timeout: Text -- 3s
-      , interval: Text -- 10s
-      , threshold: Natural -- 3
+      , statuscode: Optional Natural --  200
+      , timeout: Optional Text -- 3s
+      , interval: Optional Text -- 10s
+      , threshold: Optional Natural -- 3
       }
     ]
   , tcp:
     [ { addr: Text -- redis-server.domain.com:6379
-      , timeout: Text -- 3s
-      , interval: Text -- 10s
-      , threshold: Natural --  3
+      , timeout: Optional Text -- 3s
+      , interval: Optional Text -- 10s
+      , threshold: Optional Natural --  3
       }
     ]
   }
 
 let Proxy : Type =
   { remoteurl: Text -- https://registry-1.docker.io
-  , username: Text -- [username]
-  , password: Text -- [password]
+  , username: Optional Text -- [username]
+  , password: Optional Text -- [password]
   }
 
 let Compatibility : Type =
   { schema1:
-    { signingkeyfile: Text -- /etc/registry/key.json
-    , enabled: Bool -- true
+    { signingkeyfile: Optional Text -- /etc/registry/key.json
+    , enabled: Optional Bool -- true
     }
   }
 
@@ -314,13 +322,13 @@ let Repository : Type =
   { version : "0.1"
   , log : Log
   , storage : Storage
-  , auth: Auth
-  , middleware: Middleware
+  , auth: Optional Auth
+  , middleware: Optional Middleware
   , reporting: Reporting
   , http: Http
-  , notifications: Notifications
+  , notifications: Optional Notifications
   , redis: Redis
-  , health: Health
+  , health: Optional Health
   , proxy: Proxy
   , compatibility: Compatibility
   , validation: Validation
