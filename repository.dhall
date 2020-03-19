@@ -153,7 +153,7 @@ let M : Type =
   , options: Object
   }
 
-let MCloudfront : Type =
+let StorageCloudfront : Type =
   { name: Text -- cloudfront
   , options:
     { baseurl: Text -- https://my.cloudfronted.domain.com/
@@ -167,7 +167,7 @@ let MCloudfront : Type =
     }
   }
 
-let MRedirect =
+let StorageRedirect =
   { name: Text  -- redirect
   , options:
     { baseurl: Text  -- https://example.com/
@@ -175,10 +175,10 @@ let MRedirect =
   }
 
 let Middleware : Type =
-  { registry: [ M ]
-  , repository: [ M ]
-  , storage: [ MCloudfront ]
-  -- , storage: [ MRedirect ]
+  { registry: M
+  , repository: M
+  , storage: StorageCloudfront
+  -- , storage: StorageRedirect
   }
 
 let Reporting : Type =
