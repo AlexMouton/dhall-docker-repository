@@ -224,8 +224,7 @@ let Http : Type =
     }
   , headers:
     Optional
-    { X-Content-Type-Options: Text -- [nosniff]
-    }
+    [ { mapKey: Text, mapValue: [Text] } ]
   , http2:
     Optional
     { disabled: Bool -- false
