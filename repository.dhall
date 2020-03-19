@@ -29,8 +29,8 @@ let Filesystem =
 
 let Azure =
   { accountname: Text -- accountname
-  ,  accountkey: Text -- base64encodedaccountkey
-  ,  container: Text -- containername
+  , accountkey: Text -- base64encodedaccountkey
+  , container: Text -- containername
   }
 
 let GoogleCloudStorage =
