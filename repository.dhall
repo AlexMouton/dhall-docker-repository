@@ -1,3 +1,6 @@
+let JSON = https://prelude.dhall-lang.org/v11.1.0/JSON/package.dhall
+let Object = [ { mapKey : Text, mapValue: JSON } ]
+
 let
   Log =
     { accesslog:
@@ -6,98 +9,100 @@ let
     , level: Optional Text -- error, warn, info, and debug. The default is info.
     , formatter: Optional Text -- text, json, and logstash
     , fields:
-        Optional { service: Text -- registry
-        , environment: Text -- staging
-        }
+        Optional
+        [ { mapKey: Text, mapValue: Text } ]
     , hooks:
         [ { type: Text -- mail
           , disabled: Bool -- true
           , levels: [Text] -- panic
-          options:
-            { smtp:
-              { addr: Text -- mail.example.com:25
-              , username: Text -- mailuser
-              , password: Text -- password
-              , insecure: Bool -- true
-              }
-            , from: Text -- sender@example.com
-            , to: [ Text ] -- errors@example.com
-            }
+          , options: Object
           }
         ]
     }
 
 -- The storage option is required and defines which storage backend is in use. You must configure exactly one backend.
 -- Note: age and interval are strings containing a number with optional fraction and a unit suffix. Some examples: 45m, 2h10m, 168h.
+let Filesystem =
+  { rootdirectory: Text -- /var/lib/registry
+  ,  maxthreads: Natural -- 100
+  }
+
+let Azure =
+  { accountname: Text -- accountname
+  ,  accountkey: Text -- base64encodedaccountkey
+  ,  container: Text -- containername
+  }
+
+let GoogleCloudStorage =
+  { bucket: Text -- bucketname
+  , keyfile: Text -- /path/to/keyfile
+  , credentials:
+    { type: Text -- service_account
+    ,  project_id: Text -- project_id_string
+    ,  private_key_id: Text -- private_key_id_string
+    ,  private_key: Text -- private_key_string
+    ,  client_email: Text -- client@example.com
+    ,  client_id: Text -- client_id_string
+    ,  auth_uri: Text -- http://example.com/auth_uri
+    ,  token_uri: Text -- http://example.com/token_uri
+    ,  auth_provider_x509_cert_url: Text -- http://example.com/provider_cert_url
+    ,  client_x509_cert_url: Text -- http://example.com/client_cert_url
+    }
+  , rootdirectory: Text -- /gcs/object/name/prefix
+  , chunksize: Natural -- 5242880
+  }
+
+let S3 =
+  { accesskey: Text -- awsaccesskey
+  , secretkey: Text -- awssecretkey
+  , region: Text -- us-west-1
+  , regionendpoint: Text -- http://myobjects.local
+  , bucket: Text -- bucketname
+  , encrypt: Bool -- true
+  , keyid: Text -- mykeyid
+  , secure: Bool -- true
+  , v4auth: Bool -- true
+  , chunksize: Natural -- 5242880
+  , multipartcopychunksize: Natural -- 33554432
+  , multipartcopymaxconcurrency: Natural -- 100
+  , multipartcopythresholdsize: Natural -- 33554432
+  , rootdirectory: Text -- /s3/object/name/prefix
+  }
+
+let OpenstackSwift =
+  { username: Text -- username
+  , password: Text -- password
+  , authurl: Text -- https://storage.myprovider.com/auth/v1.0 or https://storage.myprovider.com/v2.0 or https://storage.myprovider.com/v3/auth
+  , tenant: Text -- tenantname
+  , tenantid: Text -- tenantid
+  , domain: Text -- domain name for Openstack Identity v3 API
+  , domainid: Text -- domain id for Openstack Identity v3 API
+  , insecureskipverify: Bool -- true
+  , region: Text -- fr
+  , container: Text -- containername
+  , rootdirectory: Text -- /swift/object/name/prefix
+  }
+
+let AliyunOss =
+  { accesskeyid: Text -- accesskeyid
+  , accesskeysecret: Text -- accesskeysecret
+  , region: Text -- OSS region name
+  , endpoint: Optional Text -- optional endpoints
+  , internal: Optional Text -- optional internal endpoint
+  , bucket: Text -- OSS bucket
+  , encrypt: Optional Text -- optional data encryption setting
+  , secure: Optional Text -- optional ssl setting
+  , chunksize: Optional Text -- optional size valye
+  , rootdirectory: Optional Text -- optional root directory
+  }
+
 let Storage =
-  { filesystem:
-      { rootdirectory: Text -- /var/lib/registry
-      ,  maxthreads: Natural -- 100
-      }
-  , azure:
-    { accountname: Text -- accountname
-    ,  accountkey: Text -- base64encodedaccountkey
-    ,  container: Text -- containername
-    }
-  , gcs:
-    { bucket: Text -- bucketname
-    , keyfile: Text -- /path/to/keyfile
-    , credentials:
-      { type: Text -- service_account
-      ,  project_id: Text -- project_id_string
-      ,  private_key_id: Text -- private_key_id_string
-      ,  private_key: Text -- private_key_string
-      ,  client_email: Text -- client@example.com
-      ,  client_id: Text -- client_id_string
-      ,  auth_uri: Text -- http://example.com/auth_uri
-      ,  token_uri: Text -- http://example.com/token_uri
-      ,  auth_provider_x509_cert_url: Text -- http://example.com/provider_cert_url
-      ,  client_x509_cert_url: Text -- http://example.com/client_cert_url
-      }
-    , rootdirectory: Text -- /gcs/object/name/prefix
-    , chunksize: Natural -- 5242880
-    }
-  , s3:
-    { accesskey: Text -- awsaccesskey
-    , secretkey: Text -- awssecretkey
-    , region: Text -- us-west-1
-    , regionendpoint: Text -- http://myobjects.local
-    , bucket: Text -- bucketname
-    , encrypt: Bool -- true
-    , keyid: Text -- mykeyid
-    , secure: Bool -- true
-    , v4auth: Bool -- true
-    , chunksize: Natural -- 5242880
-    , multipartcopychunksize: Natural -- 33554432
-    , multipartcopymaxconcurrency: Natural -- 100
-    , multipartcopythresholdsize: Natural -- 33554432
-    , rootdirectory: Text -- /s3/object/name/prefix
-    }
-  , swift:
-    { username: Text -- username
-    , password: Text -- password
-    , authurl: Text -- https://storage.myprovider.com/auth/v1.0 or https://storage.myprovider.com/v2.0 or https://storage.myprovider.com/v3/auth
-    , tenant: Text -- tenantname
-    , tenantid: Text -- tenantid
-    , domain: Text -- domain name for Openstack Identity v3 API
-    , domainid: Text -- domain id for Openstack Identity v3 API
-    , insecureskipverify: Bool -- true
-    , region: Text -- fr
-    , container: Text -- containername
-    , rootdirectory: Text -- /swift/object/name/prefix
-    }
-  , oss:
-    { accesskeyid: Text -- accesskeyid
-    , accesskeysecret: Text -- accesskeysecret
-    , region: Text -- OSS region name
-    , endpoint: Optional Text -- optional endpoints
-    , internal: Optional Text -- optional internal endpoint
-    , bucket: Text -- OSS bucket
-    , encrypt: Optional Text -- optional data encryption setting
-    , secure: Optional Text -- optional ssl setting
-    , chunksize: Optional Text -- optional size valye
-    , rootdirectory: Optional Text -- optional root directory
-    }
+  { filesystem: Filesystem
+  , azure: Azure
+  , gcs: GoogleCloudStorage
+  , s3: S3
+  , swift: OpenstackSwift
+  , oss: AliyunOss
   , inmemory:  {} --# This driver takes no parameters
   , delete:
     { enabled: Bool -- false
@@ -124,25 +129,28 @@ let Storage =
 -- You can configure only one authentication provider.
 let Auth : Type =
   { silly:
-    Optional { realm: Text -- silly-realm
+    Optional
+    { realm: Text -- silly-realm
     , service: Text -- silly-service
     }
   , token:
-    Optional { autoredirect: Bool --  true
+    Optional
+    { autoredirect: Bool --  true
     , realm: Text -- token-realm
     , service: Text -- token-service
     , issuer: Text -- registry-token-issuer
     , rootcertbundle: Text -- /root/certs/bundle
     }
   , htpasswd:
-    Optional { realm: Text -- basic-realm
+    Optional
+    { realm: Text -- basic-realm
     , path: Text -- /path/to/htpasswd
     }
   }
 
 let M : Type =
   { name: Text -- ARegistryMiddleware
-  , options: { foo: bar }
+  , options: Object
   }
 
 let MCloudfront : Type =
@@ -311,9 +319,9 @@ let Validation : Type =
   { manifests:
     { urls:
       { allow:
-          [ Text ] -- ^https?://([^/]+\.)*example\.com/
+        [ Text ] -- ^https?://([^/]+\.)*example\.com/
       , deny:
-          [ Text ] -- ^https?://www\.example\.com/
+        [ Text ] -- ^https?://www\.example\.com/
       }
     }
   }
